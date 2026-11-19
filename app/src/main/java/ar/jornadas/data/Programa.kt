@@ -21,11 +21,24 @@ interface CarteleraDao {
     @Query("SELECT * FROM charlas ORDER BY dia, hora, sala")
     fun observar(): Flow<List<Charla>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun guardar(fichas: List<Charla>)
-
     @Query("UPDATE charlas SET favorita = NOT favorita WHERE id = :id")
     suspend fun alternar(id: String)
+
+    @Query("SELECT id FROM charlas WHERE favorita = 1")
+    suspend fun idsFavoritas(): List<String>
+
+    @Query("DELETE FROM charlas")
+    suspend fun borrarTodas()
+
+    @Insert
+    suspend fun insertar(fichas: List<Charla>)
+
+    @Transaction
+    suspend fun reemplazarPrograma(nuevas: List<Charla>) {
+        val favoritas = idsFavoritas().toSet()
+        borrarTodas()
+        insertar(nuevas.map { it.copy(favorita = it.id in favoritas) })
+    }
 }
 
 @Database(entities = [Charla::class], version = 1, exportSchema = false)
