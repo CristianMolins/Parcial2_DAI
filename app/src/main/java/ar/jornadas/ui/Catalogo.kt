@@ -18,16 +18,35 @@ fun Catalogo(model: ProgramaModel, abrir: (String) -> Unit) {
     val fichas by model.charlas.collectAsStateWithLifecycle()
     val aviso by model.aviso.collectAsStateWithLifecycle()
     val cargando by model.cargando.collectAsStateWithLifecycle()
+    val hayEdicion by model.hayEdicion.collectAsStateWithLifecycle()
+    val baseLeida by model.baseLeida.collectAsStateWithLifecycle()
     Selector(listOf("Ambos días", "Día 1", "Día 2"), dia) { model.elegirDia(it) }
     val temas = listOf("Todos", "Android", "Datos", "Calidad")
     Selector(temas, temas.indexOf(tema)) { model.elegirTema(temas[it]) }
     TextButton(onClick = model::recargar) { Text("Actualizar") }
     if (cargando) LinearProgressIndicator(Modifier.fillMaxWidth())
-    if (aviso.isNotEmpty()) {
-        Text(aviso)
-        OutlinedButton(onClick = model::recargar) { Text("Reintentar") }
-    } else {
-        Grilla(fichas.filter { (dia == 0 || it.dia == dia) && (tema == "Todos" || it.tema == tema) }, abrir)
+
+    val hayDatos = fichas.isNotEmpty() || hayEdicion
+    val fallo = aviso.isNotEmpty()
+    when {
+        !baseLeida -> {}                                   // todavía leyendo la base
+        !hayDatos && fallo -> {                            // nunca descargó y falló
+            Text("No se pudo descargar el programa y todavía no hay datos guardados.")
+            OutlinedButton(onClick = model::recargar) { Text("Reintentar") }
+        }
+        !hayDatos -> {}                                    // primera descarga en curso
+        else -> {                                          // hay una edición guardada
+            if (fallo) {
+                Text("Sin conexión. Se muestran los datos guardados.")
+                OutlinedButton(onClick = model::recargar) { Text("Reintentar") }
+            }
+            val visibles = fichas.filter { (dia == 0 || it.dia == dia) && (tema == "Todos" || it.tema == tema) }
+            when {
+                fichas.isEmpty() -> Text("Sin charlas programadas")
+                visibles.isEmpty() -> Text("Ninguna charla coincide con los filtros.")
+                else -> Grilla(visibles, abrir)
+            }
+        }
     }
 }
 
