@@ -16,9 +16,20 @@ class ProgramaModel(app: Application) : AndroidViewModel(app) {
     val aviso = MutableStateFlow("")
     val cargando = MutableStateFlow(false)
 
+    companion object {
+        private var cargaInicialHecha = false
+    }
+
+    fun cargaInicial() {
+        if (cargaInicialHecha) return
+        cargaInicialHecha = true
+        recargar()
+    }
+
     fun recargar() {
+        if (cargando.value) return
+        cargando.value = true
         viewModelScope.launch {
-            cargando.value = true
             aviso.value = ""
             try {
                 repo.sincronizar()

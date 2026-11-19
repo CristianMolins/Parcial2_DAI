@@ -13,7 +13,7 @@ import ar.jornadas.data.Charla
 
 @Composable
 fun Catalogo(model: ProgramaModel, abrir: (String) -> Unit) {
-    LaunchedEffect(Unit) { model.recargar() }
+
     val dia by model.dia.collectAsStateWithLifecycle()
     var tema by remember { mutableStateOf("Todos") }
     val fichas by model.charlas.collectAsStateWithLifecycle()
